@@ -249,4 +249,46 @@ public class ExpenseAccounting {
 		}
 		return isFormatCorrect;
 	}
+
+	//Проверка строки, вводимой пользователем (для нового номера счета и новой категории. формат: 1-20 символов)
+	static String checkNameString(Connection connection, String consoleInput, String menuType) throws SQLException {
+		boolean isCorrect = false;
+		HashSet<String> nameSet = new HashSet<>(); //объявляем коллекцию строк
+		//подготавливаем запрос для получения названий. LCASE() - приводит текст к нижнему регистру. "as NAME" указано для универсальности выборки из ResultSet.
+		String sql = "SELECT LCASE(ACCOUNT_NAME) as NAME FROM accounts";
+		switch (menuType) {
+			case "account":
+				sql = "SELECT LCASE(ACCOUNT_NUMBER) as NAME FROM accounts";
+				break;
+			case "category":
+				sql = "SELECT LCASE(CATEGORY_INFO) as NAME FROM categories";
+				break;
+		}
+
+		Statement statement = connection.createStatement();
+		ResultSet result = statement.executeQuery(sql);
+		nameSet.clear(); //очищаем (обнуляем) коллекцию
+
+		while (result.next()) { // пока ResultSet не станет пустым извлекаем данные
+			nameSet.add(result.getString("NAME")); //заполняем коллекцию. именно для этой строки необходимо в запросах заменять имя выбираемого столбца на "NAME"
+		}
+
+		while (!isCorrect) {
+			if (!checkNameLength(consoleInput)) { //проверяем на пустую строку и на ограничение в 20 символов
+				System.err.print("Введенные данные не соответствуют условию \"1-20 символов\"! Повторите ввод (1-20 символов): ");
+				isCorrect = false;
+				consoleInput = scanner.nextLine();
+			} else if (nameSet.contains(consoleInput.toLowerCase())) { //приводим к нижнему регистру и проверяем вхождение в коллекцию
+				switch (menuType) {
+					case "account" -> System.err.print("\nВведенный номер счета уже присутствует в базе данных! Введите новый счет (1-20 символов): ");
+					case "category" -> System.err.print("\nВведенное имя категории уже присутствует в базе данных! Введите новую категорию (1-20 символов): ");
+				}
+				consoleInput = scanner.nextLine();
+				isCorrect = false;
+			} else {
+				isCorrect = true;
+			}
+		}
+		return  consoleInput;
+	}
 }
