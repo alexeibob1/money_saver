@@ -376,6 +376,25 @@ public class ExpenseAccounting {
 		outputAllCategories(connection); //показать все категории после ввода новой категории
 	}
 
+	//Вывести список всех категорий, кроме категории "Пополнение счета", у которой код (CATEGORY_ID) = 0. Скрываем ее наличие от пользователя.
+	private static void outputAllCategories(Connection connection) throws SQLException {
+		Statement statement = connection.createStatement();
+		ResultSet result = statement.executeQuery("SELECT CATEGORY_ID, CATEGORY_INFO FROM categories WHERE CATEGORY_ID > 0 ORDER by CATEGORY_ID");//выполняем команду SELECT, которая возвращает данные в виде ResultSet
+
+		System.out.println("\nКатегории расходов:");
+		System.out.println("\n╔═══════╦══════════════════════╗");
+		System.out.format("║ %-5s ║ %-20s ║", "  №", "     Категория");
+
+		while (result.next()) { // пока ResultSet не станет пустым извлекаем данные
+			int categoryId = result.getInt("CATEGORY_ID"); // тип извлекаемых данных соответствует типу данных в таблице для каждого поля
+			String categoryInfo = result.getString("CATEGORY_INFO");
+
+			System.out.print("\n╠═══════╬══════════════════════╣");
+			System.out.format("\n║ %-5d ║ %-20s ║", categoryId, categoryInfo);
+		}
+		System.out.println("\n╚═══════╩══════════════════════╝");
+	}
+
 	static double calcDouble(double double1, double double2, char operation){
 		double result = 0d;
 		switch (operation) {
