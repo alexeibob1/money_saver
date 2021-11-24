@@ -194,4 +194,49 @@ public class ExpenseAccounting {
 		}
 		return Math.round(transactionAmount * 100.0) / 100.0;
 	}
+
+	//Проверка даты введенной пользователем (соответствие формату ГГГГ-ММ-ДД)
+	static String checkDateFormat(String consoleInput) {
+		boolean flag = true;
+		boolean isFormatCorrect = true;
+		int numTmp;
+		int partLength;
+
+		//если пользователь не вводил дату, а нажал ввод, то присвоить текущую дату
+		if (consoleInput.isEmpty()) { //проверяем что строка пустая. при этом символ \n (enter) не учитывается
+			LocalDate systemDate = LocalDate.now(); //получаем текущую дату
+			DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd"); //подготавливаем шаблон для форматирования даты в строку
+			consoleInput = dtf.format(systemDate); //применяем шаблон к дате при конвертации строку
+		}
+
+		//проверка строки на формат ГГГГ-ММ-ДД
+		String[] splitDate = consoleInput.split("-"); //разделяем строку на части, где разделитель символ тире
+
+		for (int i = 0; i < splitDate.length; i++) {
+			String datePart = splitDate[i];
+			partLength = datePart.length();
+
+			if (i == 0 && partLength != 4) { //проверяем что первая часть строки имеет длину 4 символа, что соответствует записи года (ГГГГ)
+				isFormatCorrect = false;
+				flag = false;
+			} else if (i > 0 && datePart.length() != 2) { //проверяем что 2-я и 3-я часть строки имеет длину 2 символа, что соответствует записи месяца (ММ) и дня (ДД)
+				isFormatCorrect = false;
+				flag = false;
+			}
+
+			//если количество символов соответствует части строки, то проверяем что это цифры
+			if (isFormatCorrect) {
+				try {
+					numTmp = Integer.parseInt(datePart); //парсинг части строки в число
+				} catch (NumberFormatException e) {
+					flag = false;
+				}
+			}
+		}
+
+		if (!isFormatCorrect || !flag) {
+			consoleInput = "error";
+		}
+		return consoleInput;
+	}
 }
