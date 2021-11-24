@@ -239,4 +239,14 @@ public class ExpenseAccounting {
 		}
 		return consoleInput;
 	}
+
+	//Проверка длины строки, вводимой пользователем (для нового номера счета и новой категории. формат: 1-20 символов)
+	static boolean checkNameLength(String consoleInput) {
+		boolean isFormatCorrect = true;
+
+		if (consoleInput.isEmpty() || consoleInput.length() > 20) { //проверяем на пустую строку и на ограничение в 20 символов
+			isFormatCorrect = false;
+		}
+		return isFormatCorrect;
+	}
 }
