@@ -291,4 +291,75 @@ public class ExpenseAccounting {
 		}
 		return  consoleInput;
 	}
+
+	//Заполнение множества для проверки пунктов меню
+	private static boolean checkNumberInRange(Connection connection, int userChoice, String menuType) throws SQLException {
+
+		HashSet<Integer> menuSet = new HashSet<>(); //объявляем коллекцию типа HashSet<Integer>
+
+		String sql = "SELECT ID FROM menu_items WHERE ID = 0" ;
+		int menuNum = 0;
+
+		// формируем sql текст запрос в зависимости от того, для какого меню на экране необходимо проверить значение вводимое пользователем
+		// запрос вернет список значений поля уникального ключа для соответствующей таблицы (счета, транзакции, категории).
+		// для основного и меню возврата, данные формируются из статической таблицы main_menu
+
+		switch (menuType) {
+			case "mainmenu":
+				sql = "SELECT ID FROM menu_items ORDER by ID";
+				break;
+			case "backmenu":
+				sql = "SELECT ID FROM menu_items WHERE ID in (0 , 1)";
+				break;
+			case "accounts":
+				sql = "SELECT ID FROM accounts ORDER by ID";
+				break;
+			case "categories":
+				// запись вида CATEGORY_ID as ID позволяет поменять в получаемом результате запросе название колонки с CATEGORY_ID на ID
+				// чтобы далее однотипно выполнять извлечение данных из ResultSet командой result.getInt("ID")
+				sql = "SELECT CATEGORY_ID as ID FROM categories ORDER by CATEGORY_ID";
+				break;
+			case "activities":
+				sql = "SELECT TRANSACTION_ID as ID FROM account_activity ORDER by TRANSACTION_ID";
+				break;
+		}
+		Statement statement = connection.createStatement();
+		ResultSet result = statement.executeQuery(sql);
+		menuSet.clear(); //очищаем (обнуляем) коллекцию
+
+		while (result.next()) { // пока ResultSet не станет пустым извлекаем данные
+			menuNum = result.getInt("ID"); // тип извлекаемых данных должен соответствовать типу данных в таблице
+			menuSet.add(menuNum); //заполняем коллекцию
+		}
+
+		return menuSet.contains(userChoice); //проверяем есть ли такое число в коллекции
+	}
+
+	static double calcDouble(double double1, double double2, char operation){
+		double result = 0d;
+		switch (operation) {
+			case '+':
+				result = double1 + double2;
+				break;
+			case '-':
+				result = double1 - double2;
+				break;
+			case '*':
+				result = double1 * double2;
+				break;
+			case '%':
+				result = (double2 * double1)/100;
+				break;
+			case '/':
+				if (double2 == 0) {
+					throw new ArithmeticException("division by zero");
+				} else {
+					result = double1 / double2;
+				}
+				break;
+			default:
+				System.out.println("Ошибка! Знак арифметической операции не распознан.");
+		}
+		return result;
+	}
 }
