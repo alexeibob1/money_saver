@@ -96,6 +96,7 @@ public class Main {
 
             if (userChoice !=0 ) {
                 closeProg = back2menu();
+                
             }
 
         } while (!closeProg);
