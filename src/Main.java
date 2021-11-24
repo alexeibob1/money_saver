@@ -16,7 +16,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        //Подключение к БД MS ACCESS. Используем драйвер UCanAccess. Указан полный путь к файлу БД (.accdb)
+        //Подключение к БД MS ACCESS. Исользуем драйвер UCanAccess. Указан полный путь к файлу БД (.accdb)
         String databaseURL = "jdbc:ucanaccess://d://Database_Accounting.accdb";
         int userChoice = -1;
         boolean closeProg = false;
