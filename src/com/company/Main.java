@@ -335,6 +335,27 @@ public class ExpenseAccounting {
 		return menuSet.contains(userChoice); //проверяем есть ли такое число в коллекции
 	}
 
+	private static void addAccount(Connection connection) throws SQLException {
+
+		outputAllAccountsInfo(connection); //показать все счета на текущий момент
+		System.out.print("\nВведите новый номер банковского счета (1-20 символов): ");
+		String accountNumber = scanner.nextLine();
+		accountNumber = checkNameString(connection, accountNumber, "account");
+
+		String sql = "INSERT into accounts (ACCOUNT_NUMBER, CURRENT_BALANCE) VALUES (?, 0)"; //подготовка текста параметризованного sql запроса на вставку строки данных в таблицу
+		PreparedStatement preparedStatement = connection.prepareStatement(sql); //форматируем/подготавливаем запрос к подстановке параметров
+		preparedStatement.setString(1, accountNumber); // подставляем параметр
+
+		int qRow = preparedStatement.executeUpdate(); //выполняет SQL-команды вида INSERT, UPDATE, DELETE, CREATE и возвращает количество измененных строк
+
+		if (qRow > 0) {
+			System.out.print("\nНовый счет успешно добавлен.");
+			System.out.println();
+		}
+
+		outputAllAccountsInfo(connection);
+	}
+
 	static double calcDouble(double double1, double double2, char operation){
 		double result = 0d;
 		switch (operation) {
