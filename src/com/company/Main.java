@@ -356,6 +356,26 @@ public class ExpenseAccounting {
 		outputAllAccountsInfo(connection);
 	}
 
+	//добавить новую категорию
+	private static void addCategory(Connection connection) throws SQLException {
+		outputAllCategories(connection); //показать все категории на текущий момент
+		System.out.print("\nВведите новую категорию (1-20 символов): ");
+		String categoryInfo = scanner.nextLine();
+		categoryInfo = checkNameString(connection, categoryInfo, "category");
+
+		String sql = "INSERT into categories (CATEGORY_INFO) VALUES (?)";
+		PreparedStatement preparedStatement = connection.prepareStatement(sql);
+		preparedStatement.setString(1, categoryInfo);
+
+		int qRow = preparedStatement.executeUpdate();
+
+		if (qRow > 0) {
+			System.out.print("\nНовая категория успешно добавлена.");
+			System.out.println();
+		}
+		outputAllCategories(connection); //показать все категории после ввода новой категории
+	}
+
 	static double calcDouble(double double1, double double2, char operation){
 		double result = 0d;
 		switch (operation) {
