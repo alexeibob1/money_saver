@@ -475,31 +475,35 @@ public class stas {
     }
 
     //изменение баланса счету
-    private static void changeAccountBalance(Connection connection, int accountID, double transactionAmount, int flag) throws SQLException {
+    private static void changeAccountBalance(Connection connection, int accountID, double transactionAmount, int flag) {
         double currentBalance = 0;
 
         String sql = "SELECT CURRENT_BALANCE FROM accounts WHERE ID = ?";
-        PreparedStatement preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setInt(1, accountID);
-        ResultSet result = preparedStatement.executeQuery(); // получаем текущий баланс по указанному счету
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setInt(1, accountID);
+            ResultSet result = preparedStatement.executeQuery(); // получаем текущий баланс по указанному счету
 
-        while (result.next()) {
-            currentBalance = result.getDouble("CURRENT_BALANCE");
-        }
+            while (result.next()) {
+                currentBalance = result.getDouble("CURRENT_BALANCE");
+            }
 
-        currentBalance = countSum(currentBalance, transactionAmount, flag);
+            currentBalance = countSum(currentBalance, transactionAmount, flag);
 
-        //текст параметризованного sql-запроса для обновления значения поля CURRENT_BALANCE в таблице accounts
-        sql = "UPDATE accounts SET CURRENT_BALANCE = ? WHERE ID = ?";
+            //текст параметризованного sql-запроса для обновления значения поля CURRENT_BALANCE в таблице accounts
+            sql = "UPDATE accounts SET CURRENT_BALANCE = ? WHERE ID = ?";
 
-        preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setDouble(1, currentBalance);
-        preparedStatement.setInt(2, accountID);
-        int qRow = preparedStatement.executeUpdate();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setDouble(1, currentBalance);
+            preparedStatement.setInt(2, accountID);
+            int qRow = preparedStatement.executeUpdate();
 
-        if (qRow > 0) {
-            System.out.println("Баланс счета успешно обновлен.");
-            System.out.println();
+            if (qRow > 0) {
+                System.out.println("Баланс счета успешно обновлен.");
+                System.out.println();
+            }
+        } catch (SQLException e) {
+            System.out.println("");
         }
     }
 
@@ -549,25 +553,25 @@ public class stas {
         //конструкция format(CDate(?),"yyyy-mm-dd") принудительно заставляет БД преобразовать (CDate) значение параметра ? в соответствии с шаблоном (format) ГГГГ-ММ-ДД
         String sql = "INSERT into account_activity (ACCOUNT_ID, TRANSACTION_AMOUNT, CATEGORY_ID, TRANSACTION_DATE) VALUES (?, ?, ?, format(CDate(?),\"yyyy-mm-dd\") )";
 
-        PreparedStatement preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setInt(1, accountID);
-        preparedStatement.setDouble(2, Math.abs(transactionAmount) * flag);
-        preparedStatement.setInt(3, categoryID);
-        preparedStatement.setString(4, transactionDate);
-        int qRow = preparedStatement.executeUpdate();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, accountID);
+            preparedStatement.setDouble(2, Math.abs(transactionAmount) * flag);
+            preparedStatement.setInt(3, categoryID);
+            preparedStatement.setString(4, transactionDate);
+            int qRow = preparedStatement.executeUpdate();
 
-        if (qRow > 0) {
-            System.out.print("\nТранзакция успешно внесена.");
-            System.out.println();
+            if (qRow > 0) {
+                System.out.print("\nТранзакция успешно внесена.");
+                System.out.println();
+            }
+
+            //Выполняем обновление баланса.
+            // Math.abs(Х)*flag призвана исключить ситуацию когда пользователь пополняет баланс, но при этом вводит отрицательную сумму пополнения (и обратная ситуация).
+            changeAccountBalance(connection, accountID, Math.abs(transactionAmount), flag);
+
+            outputAccountInfo(connection, accountID); //выводим список всех счетов
+            outputAccountActivity(connection, accountID, 5); //выводим список 5-ти последних транзакций по обновленному счету
         }
-
-        //Выполняем обновление баланса.
-        // Math.abs(Х)*flag призвана исключить ситуацию когда пользователь пополняет баланс, но при этом вводит отрицательную сумму пополнения (и обратная ситуация).
-        changeAccountBalance(connection, accountID, Math.abs(transactionAmount), flag);
-
-        outputAccountInfo(connection, accountID); //выводим список всех счетов
-        outputAccountActivity(connection, accountID, 5); //выводим список 5-ти последних транзакций по обновленному счету
-
     }
 
     // Вывести информацию о движении средств по указанному счету.
@@ -613,23 +617,24 @@ public class stas {
             sql = "SELECT " + sql; //вариант 2.
         }
 
-        PreparedStatement preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setInt(1, accountID);
-        ResultSet result = preparedStatement.executeQuery();
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, accountID);
+            ResultSet result = preparedStatement.executeQuery();
 
-        System.out.println("\n╔═══════╦══════════════════════╦════════════╦══════════════════════╦═════════════╗");
-        System.out.format("║ %-5s ║ %-20s ║ %-10s ║ %-20s ║ %-11s ║", "  №", "        Счет", "  Сумма", "     Категория", "    Дата");
+            System.out.println("\n╔═══════╦══════════════════════╦════════════╦══════════════════════╦═════════════╗");
+            System.out.format("║ %-5s ║ %-20s ║ %-10s ║ %-20s ║ %-11s ║", "  №", "        Счет", "  Сумма", "     Категория", "    Дата");
 
-        while (result.next()) {
-            int transactionId = result.getInt("TRANSACTION_ID");
-            String accountNumber = result.getString("ACCOUNT_NUMBER");
-            double transactionAmount = result.getDouble("TRANSACTION_AMOUNT");
-            String categoryInfo = result.getString("CATEGORY_INFO");
-            Date transactionDate = result.getDate("TRANSACTION_DATE");
-            System.out.print("\n╠═══════╬══════════════════════╬════════════╬══════════════════════╬═════════════╣");
-            System.out.format("\n║ %-5d ║ %-20s ║ %10.2f ║ %-20s ║ %-11s ║", transactionId, accountNumber, transactionAmount, categoryInfo, transactionDate);
+            while (result.next()) {
+                int transactionId = result.getInt("TRANSACTION_ID");
+                String accountNumber = result.getString("ACCOUNT_NUMBER");
+                double transactionAmount = result.getDouble("TRANSACTION_AMOUNT");
+                String categoryInfo = result.getString("CATEGORY_INFO");
+                Date transactionDate = result.getDate("TRANSACTION_DATE");
+                System.out.print("\n╠═══════╬══════════════════════╬════════════╬══════════════════════╬═════════════╣");
+                System.out.format("\n║ %-5d ║ %-20s ║ %10.2f ║ %-20s ║ %-11s ║", transactionId, accountNumber, transactionAmount, categoryInfo, transactionDate);
+            }
+            System.out.println("\n╚═══════╩══════════════════════╩════════════╩══════════════════════╩═════════════╝");
         }
-        System.out.println("\n╚═══════╩══════════════════════╩════════════╩══════════════════════╩═════════════╝");
     }
 
     // удаление транзакции
@@ -640,38 +645,42 @@ public class stas {
         int accountId = 0;
         double transactionAmount = 0;
         int flag = 1;
+        try {
+            if (transactionID == -1) {
+                outputAccountActivity(connection, 0, 0);
+                String subMenuMsg = "\nДля удаления операции, укажите ее порядковый номер из списка: ";
+                transactionID = checkMenuUserChoice(connection, "activities", subMenuMsg);
+            }
 
-        if (transactionID == -1) {
-            outputAccountActivity(connection, 0, 0);
-            String subMenuMsg = "\nДля удаления операции, укажите ее порядковый номер из списка: ";
-            transactionID = checkMenuUserChoice(connection, "activities", subMenuMsg);
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT ACCOUNT_ID, TRANSACTION_AMOUNT, CATEGORY_ID FROM account_activity WHERE TRANSACTION_ID = ?");
+            preparedStatement.setInt(1, transactionID);
+            ResultSet result = preparedStatement.executeQuery();
+
+            while (result.next()) {
+                accountId = result.getInt("ACCOUNT_ID");
+                transactionAmount = result.getDouble("TRANSACTION_AMOUNT");
+                categoryId = result.getInt("CATEGORY_ID");
+            }
+
+            if (categoryId == 0) { // если пользователь удаляет ранее введенную транзакцию ПОПОЛНЕНИЯ счета (код категории 0), необходимо СПИСАТЬ со счета  (отрицательная сумма)
+                flag = -1;
+            } else {  // если пользователь удаляет ранее введенную транзакцию СПИСАНИЯ со счета (код отличный от 0), необходимо ПОПОЛНИТЬ счет (положительная сумма)
+                flag = 1;
+            }
+            // Math.abs(Х)*flag призвана изменить знак суммы транзакции (со списания на пополнение и наоборот)
+
+            preparedStatement = connection.prepareStatement("DELETE FROM account_activity WHERE TRANSACTION_ID = ?");
+            preparedStatement.setInt(1, transactionID);
+            int qRow = preparedStatement.executeUpdate();
+            if (qRow > 0) {
+                System.out.println("Транзакция успешно удалена.");
+            }
+
+            changeAccountBalance(connection, accountId, Math.abs(transactionAmount), flag); //передаем данные на удаление
+        } catch (SQLException e) {
+            System.out.println("");
         }
 
-        PreparedStatement preparedStatement = connection.prepareStatement("SELECT ACCOUNT_ID, TRANSACTION_AMOUNT, CATEGORY_ID FROM account_activity WHERE TRANSACTION_ID = ?");
-        preparedStatement.setInt(1, transactionID);
-        ResultSet result = preparedStatement.executeQuery();
-
-        while (result.next()) {
-            accountId = result.getInt("ACCOUNT_ID");
-            transactionAmount = result.getDouble("TRANSACTION_AMOUNT");
-            categoryId = result.getInt("CATEGORY_ID");
-        }
-
-        if (categoryId == 0) { // если пользователь удаляет ранее введенную транзакцию ПОПОЛНЕНИЯ счета (код категории 0), необходимо СПИСАТЬ со счета  (отрицательная сумма)
-            flag = -1;
-        } else {  // если пользователь удаляет ранее введенную транзакцию СПИСАНИЯ со счета (код отличный от 0), необходимо ПОПОЛНИТЬ счет (положительная сумма)
-            flag = 1;
-        }
-        // Math.abs(Х)*flag призвана изменить знак суммы транзакции (со списания на пополнение и наоборот)
-
-        preparedStatement = connection.prepareStatement("DELETE FROM account_activity WHERE TRANSACTION_ID = ?");
-        preparedStatement.setInt(1, transactionID);
-        int qRow = preparedStatement.executeUpdate();
-        if (qRow > 0) {
-            System.out.println("Транзакция успешно удалена.");
-        }
-
-        changeAccountBalance(connection, accountId, Math.abs(transactionAmount), flag); //передаем данные на удаление
     }
 
     //удаление категории
@@ -679,30 +688,32 @@ public class stas {
 
         int categoryId = 0;
         int transactionId = 0;
+        try {
+            outputAllCategories(connection); //вывести список всех категорий (выводит список всех категорий кроме категории "Пополнение счета" с кодом 0)
+            String subMenuMsg = "\nДля удаления категории, укажите ее порядковый номер из списка: ";
+            categoryId = checkMenuUserChoice(connection, "categories", subMenuMsg);
+            PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM categories WHERE CATEGORY_ID = ?"); //запрос на удаление записи из таблицы категорий
+            preparedStatement.setInt(1, categoryId);
+            int qRow = preparedStatement.executeUpdate();
+            if (qRow > 0) {
+                System.out.println("Категория успешно удалена.");
+            }
 
-        outputAllCategories(connection); //вывести список всех категорий (выводит список всех категорий кроме категории "Пополнение счета" с кодом 0)
-        String subMenuMsg = "\nДля удаления категории, укажите ее порядковый номер из списка: ";
-        categoryId = checkMenuUserChoice(connection, "categories", subMenuMsg);
+            outputAllCategories(connection);
 
-        PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM categories WHERE CATEGORY_ID = ?"); //запрос на удаление записи из таблицы категорий
-        preparedStatement.setInt(1, categoryId);
-        int qRow = preparedStatement.executeUpdate();
-        if (qRow > 0) {
-            System.out.println("Категория успешно удалена.");
-        }
+            //запрос на список всех транзакций у которых была указана удаленная категория (с возвратом средств на соответствующие счета)
+            preparedStatement = connection.prepareStatement("SELECT TRANSACTION_ID FROM account_activity WHERE CATEGORY_ID = ?");
 
-        outputAllCategories(connection);
+            preparedStatement.setInt(1, categoryId);
+            ResultSet result = preparedStatement.executeQuery(); // получаем ResultSet со списком идентификатора транзакций
 
-        //запрос на список всех транзакций у которых была указана удаленная категория (с возвратом средств на соответствующие счета)
-        preparedStatement = connection.prepareStatement("SELECT TRANSACTION_ID FROM account_activity WHERE CATEGORY_ID = ?");
-
-        preparedStatement.setInt(1, categoryId);
-        ResultSet result = preparedStatement.executeQuery(); // получаем ResultSet со списком идентификатора транзакций
-
-        //пока ResultSet не пустой выполняем процедуру удаления транзакции и возврата денег на счет (по одной за проход, т.е. если список из 10 транзакций = 10 проходов)
-        while (result.next()) {
-            transactionId = result.getInt("TRANSACTION_ID");
-            deleteAccountActivity(connection, transactionId);
+            //пока ResultSet не пустой выполняем процедуру удаления транзакции и возврата денег на счет (по одной за проход, т.е. если список из 10 транзакций = 10 проходов)
+            while (result.next()) {
+                transactionId = result.getInt("TRANSACTION_ID");
+                deleteAccountActivity(connection, transactionId);
+            }
+        } catch (SQLException e) {
+            System.out.println("");
         }
     }
 
@@ -711,30 +722,32 @@ public class stas {
 
         int accountId = 0;
         int transactionId = 0;
+        try {
+            outputAllAccountsInfo(connection); //вывести список всех счетов
+            String subMenuMsg = "\nДля удаления счета, укажите его порядковый номер из списка: ";
+            accountId = checkMenuUserChoice(connection, "accounts", subMenuMsg);
 
-        outputAllAccountsInfo(connection); //вывести список всех счетов
+            PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM accounts WHERE ID = ?"); //запрос на удаление записи из таблицы счетов
+            preparedStatement.setInt(1, accountId);
+            int qRow = preparedStatement.executeUpdate();
+            if (qRow > 0) {
+                System.out.println("Счет успешно удален.");
+            }
 
-        String subMenuMsg = "\nДля удаления счета, укажите его порядковый номер из списка: ";
-        accountId = checkMenuUserChoice(connection, "accounts", subMenuMsg);
+            //запрос на список всех транзакций у которых был указан удаленный счет
+            preparedStatement = connection.prepareStatement("SELECT TRANSACTION_ID FROM account_activity WHERE ACCOUNT_ID = ?");
 
-        PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM accounts WHERE ID = ?"); //запрос на удаление записи из таблицы счетов
-        preparedStatement.setInt(1, accountId);
-        int qRow = preparedStatement.executeUpdate();
-        if (qRow > 0) {
-            System.out.println("Счет успешно удален.");
-        }
+            preparedStatement.setInt(1, accountId);
+            ResultSet result = preparedStatement.executeQuery(); // получаем ResultSet со списком идентификатора транзакций
 
-        //запрос на список всех транзакций у которых был указан удаленный счет
-        preparedStatement = connection.prepareStatement("SELECT TRANSACTION_ID FROM account_activity WHERE ACCOUNT_ID = ?");
+            //пока ResultSet не пустой выполняем процедуру удаления транзакции и возврата денег на счет (по одной за проход, т.е. если список из 10 транзакций = 10 проходов)
+            while (result.next()) {
+                transactionId = result.getInt("TRANSACTION_ID");
 
-        preparedStatement.setInt(1, accountId);
-        ResultSet result = preparedStatement.executeQuery(); // получаем ResultSet со списком идентификатора транзакций
-
-        //пока ResultSet не пустой выполняем процедуру удаления транзакции и возврата денег на счет (по одной за проход, т.е. если список из 10 транзакций = 10 проходов)
-        while (result.next()) {
-            transactionId = result.getInt("TRANSACTION_ID");
-
-            deleteAccountActivity(connection, transactionId);
+                deleteAccountActivity(connection, transactionId);
+            }
+        } catch (SQLException e) {
+            System.out.println("");
         }
     }
 
@@ -753,22 +766,25 @@ public class stas {
 
         String categoryInfo;
         double transactionSum;
+        try {
+            System.out.println("\nСтатистика по категориям.\n");
+            Statement statement = connection.createStatement();
+            ResultSet result = statement.executeQuery(sql);
 
-        System.out.println("\nСтатистика по категориям.\n");
-        Statement statement = connection.createStatement();
-        ResultSet result = statement.executeQuery(sql);
+            System.out.println("\n╔══════════════════════╦════════════╗");
+            System.out.format("║ %-20s ║ %-10s ║", "     Категория", "  Сумма");
 
-        System.out.println("\n╔══════════════════════╦════════════╗");
-        System.out.format("║ %-20s ║ %-10s ║", "     Категория", "  Сумма");
+            while (result.next()) {
+                categoryInfo = result.getString("CATEGORY_INFO");
+                transactionSum = result.getDouble("TRANSACTION_SUM");
 
-        while (result.next()) {
-            categoryInfo = result.getString("CATEGORY_INFO");
-            transactionSum = result.getDouble("TRANSACTION_SUM");
-
-            System.out.print("\n╠══════════════════════╬════════════╣");
-            System.out.format("\n║ %-20s ║ %10.2f ║", categoryInfo, transactionSum);
+                System.out.print("\n╠══════════════════════╬════════════╣");
+                System.out.format("\n║ %-20s ║ %10.2f ║", categoryInfo, transactionSum);
+            }
+            System.out.println("\n╚══════════════════════╩════════════╝");
+        } catch (SQLException e) {
+            System.out.println("");
         }
-        System.out.println("\n╚══════════════════════╩════════════╝");
     }
 
 }
