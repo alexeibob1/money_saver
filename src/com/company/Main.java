@@ -37,8 +37,7 @@ public class Main {
                 "\n╚═══╩════════════════════════════════╝" +
                 "\nВыберите пункт Меню: ";
         do {
-            try {
-                Connection connection = DriverManager.getConnection(databaseURL);
+            try (Connection connection = DriverManager.getConnection(databaseURL)){
                 userChoice = checkMenuUserChoice(connection, "mainmenu", menuMsg);
 
                 switch (userChoice) {
@@ -267,31 +266,32 @@ public class Main {
                 break;
         }
 
-        Statement statement = connection.createStatement();
-        ResultSet result = statement.executeQuery(sql);
-        nameSet.clear(); //очищаем (обнуляем) коллекцию
+        try (Statement statement = connection.createStatement()) {
+            ResultSet result = statement.executeQuery(sql);
+            nameSet.clear(); //очищаем (обнуляем) коллекцию
 
-        while (result.next()) { // пока ResultSet не станет пустым извлекаем данные
-            nameSet.add(result.getString("NAME")); //заполняем коллекцию. именно для этой строки необходимо в запросах заменять имя выбираемого столбца на "NAME"
-        }
-
-        while (!isCorrect) {
-            if (!checkNameLength(consoleInput)) { //проверяем на пустую строку и на ограничение в 20 символов
-                System.err.print("Введенные данные не соответствуют условию \"1-20 символов\"! Повторите ввод (1-20 символов): ");
-                isCorrect = false;
-                consoleInput = scanner.nextLine();
-            } else if (nameSet.contains(consoleInput.toLowerCase())) { //приводим к нижнему регистру и проверяем вхождение в коллекцию
-                switch (menuType) {
-                    case "account" -> System.err.print("\nВведенный номер счета уже присутствует в базе данных! Введите новый счет (1-20 символов): ");
-                    case "category" -> System.err.print("\nВведенное имя категории уже присутствует в базе данных! Введите новую категорию (1-20 символов): ");
-                }
-                consoleInput = scanner.nextLine();
-                isCorrect = false;
-            } else {
-                isCorrect = true;
+            while (result.next()) { // пока ResultSet не станет пустым извлекаем данные
+                nameSet.add(result.getString("NAME")); //заполняем коллекцию. именно для этой строки необходимо в запросах заменять имя выбираемого столбца на "NAME"
             }
+
+            while (!isCorrect) {
+                if (!checkNameLength(consoleInput)) { //проверяем на пустую строку и на ограничение в 20 символов
+                    System.err.print("Введенные данные не соответствуют условию \"1-20 символов\"! Повторите ввод (1-20 символов): ");
+                    isCorrect = false;
+                    consoleInput = scanner.nextLine();
+                } else if (nameSet.contains(consoleInput.toLowerCase())) { //приводим к нижнему регистру и проверяем вхождение в коллекцию
+                    switch (menuType) {
+                        case "account" -> System.err.print("\nВведенный номер счета уже присутствует в базе данных! Введите новый счет (1-20 символов): ");
+                        case "category" -> System.err.print("\nВведенное имя категории уже присутствует в базе данных! Введите новую категорию (1-20 символов): ");
+                    }
+                    consoleInput = scanner.nextLine();
+                    isCorrect = false;
+                } else {
+                    isCorrect = true;
+                }
+            }
+            return consoleInput;
         }
-        return consoleInput;
     }
 
     //Заполнение множества для проверки пунктов меню
@@ -325,16 +325,17 @@ public class Main {
                 sql = "SELECT TRANSACTION_ID as ID FROM account_activity ORDER by TRANSACTION_ID";
                 break;
         }
-        Statement statement = connection.createStatement();
-        ResultSet result = statement.executeQuery(sql);
-        menuSet.clear(); //очищаем (обнуляем) коллекцию
+        try(Statement statement = connection.createStatement()){
+            ResultSet result = statement.executeQuery(sql);
+            menuSet.clear(); //очищаем (обнуляем) коллекцию
 
-        while (result.next()) { // пока ResultSet не станет пустым извлекаем данные
-            menuNum = result.getInt("ID"); // тип извлекаемых данных должен соответствовать типу данных в таблице
-            menuSet.add(menuNum); //заполняем коллекцию
-        }
+            while (result.next()) { // пока ResultSet не станет пустым извлекаем данные
+                menuNum = result.getInt("ID"); // тип извлекаемых данных должен соответствовать типу данных в таблице
+                menuSet.add(menuNum); //заполняем коллекцию
+            }
 
-        return menuSet.contains(userChoice); //проверяем есть ли такое число в коллекции
+            return menuSet.contains(userChoice); //проверяем есть ли такое число в коллекции
+         }
     }
 
     static double calcDouble(double double1, double double2, char operation) {
@@ -374,17 +375,21 @@ public class Main {
         accountNumber = checkNameString(connection, accountNumber, "account");
 
         String sql = "INSERT into accounts (ACCOUNT_NUMBER, CURRENT_BALANCE) VALUES (?, 0)"; //подготовка текста параметризованного sql запроса на вставку строки данных в таблицу
-        PreparedStatement preparedStatement = connection.prepareStatement(sql); //форматируем/подготавливаем запрос к подстановке параметров
-        preparedStatement.setString(1, accountNumber); // подставляем параметр
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql))
+        {
+             //форматируем/подготавливаем запрос к подстановке параметров
+            preparedStatement.setString(1, accountNumber); // подставляем параметр
 
-        int qRow = preparedStatement.executeUpdate(); //выполняет SQL-команды вида INSERT, UPDATE, DELETE, CREATE и возвращает количество измененных строк
+            int qRow = preparedStatement.executeUpdate(); //выполняет SQL-команды вида INSERT, UPDATE, DELETE, CREATE и возвращает количество измененных строк
 
-        if (qRow > 0) {
-            System.out.print("\nНовый счет успешно добавлен.");
-            System.out.println();
+            if (qRow > 0) {
+                System.out.print("\nНовый счет успешно добавлен.");
+                System.out.println();
+            }
+
+            outputAllAccountsInfo(connection);
         }
 
-        outputAllAccountsInfo(connection);
     }
 
     //добавить новую категорию
@@ -395,74 +400,78 @@ public class Main {
         categoryInfo = checkNameString(connection, categoryInfo, "category");
 
         String sql = "INSERT into categories (CATEGORY_INFO) VALUES (?)";
-        PreparedStatement preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setString(1, categoryInfo);
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, categoryInfo);
 
-        int qRow = preparedStatement.executeUpdate();
+            int qRow = preparedStatement.executeUpdate();
 
-        if (qRow > 0) {
-            System.out.print("\nНовая категория успешно добавлена.");
-            System.out.println();
+            if (qRow > 0) {
+                System.out.print("\nНовая категория успешно добавлена.");
+                System.out.println();
+            }
+            outputAllCategories(connection); //показать все категории после ввода новой категории
         }
-        outputAllCategories(connection); //показать все категории после ввода новой категории
     }
 
     //Вывести список всех категорий, кроме категории "Пополнение счета", у которой код (CATEGORY_ID) = 0. Скрываем ее наличие от пользователя.
     private static void outputAllCategories(Connection connection) throws SQLException {
-        Statement statement = connection.createStatement();
-        ResultSet result = statement.executeQuery("SELECT CATEGORY_ID, CATEGORY_INFO FROM categories WHERE CATEGORY_ID > 0 ORDER by CATEGORY_ID");//выполняем команду SELECT, которая возвращает данные в виде ResultSet
+        try (Statement statement = connection.createStatement()) {
+            ResultSet result = statement.executeQuery("SELECT CATEGORY_ID, CATEGORY_INFO FROM categories WHERE CATEGORY_ID > 0 ORDER by CATEGORY_ID");//выполняем команду SELECT, которая возвращает данные в виде ResultSet
 
-        System.out.println("\nКатегории расходов:");
-        System.out.println("\n╔═══════╦══════════════════════╗");
-        System.out.format("║ %-5s ║ %-20s ║", "  №", "     Категория");
+            System.out.println("\nКатегории расходов:");
+            System.out.println("\n╔═══════╦══════════════════════╗");
+            System.out.format("║ %-5s ║ %-20s ║", "  №", "     Категория");
 
-        while (result.next()) { // пока ResultSet не станет пустым извлекаем данные
-            int categoryId = result.getInt("CATEGORY_ID"); // тип извлекаемых данных соответствует типу данных в таблице для каждого поля
-            String categoryInfo = result.getString("CATEGORY_INFO");
+            while (result.next()) { // пока ResultSet не станет пустым извлекаем данные
+                int categoryId = result.getInt("CATEGORY_ID"); // тип извлекаемых данных соответствует типу данных в таблице для каждого поля
+                String categoryInfo = result.getString("CATEGORY_INFO");
 
-            System.out.print("\n╠═══════╬══════════════════════╣");
-            System.out.format("\n║ %-5d ║ %-20s ║", categoryId, categoryInfo);
+                System.out.print("\n╠═══════╬══════════════════════╣");
+                System.out.format("\n║ %-5d ║ %-20s ║", categoryId, categoryInfo);
+            }
+            System.out.println("\n╚═══════╩══════════════════════╝");
         }
-        System.out.println("\n╚═══════╩══════════════════════╝");
     }
 
     //вывести список ВСЕХ счетов
     private static void outputAllAccountsInfo(Connection connection) throws SQLException {
-        Statement statement = connection.createStatement();
-        ResultSet result = statement.executeQuery("SELECT ID, ACCOUNT_NUMBER, CURRENT_BALANCE FROM accounts ORDER by ID");
+        try (Statement statement = connection.createStatement()) {
+            ResultSet result = statement.executeQuery("SELECT ID, ACCOUNT_NUMBER, CURRENT_BALANCE FROM accounts ORDER by ID");
 
-        System.out.println("\nТекущий баланс по счетам.");
+            System.out.println("\nТекущий баланс по счетам.");
 
-        System.out.println("\n╔═══════╦══════════════════════╦════════════╗");
-        System.out.format("║ %-5s ║ %-20s ║ %-10s ║", "  №", "        Счет", "  Баланс");
-        while (result.next()) {
-            int accountId = result.getInt("ID");
-            String accountNumber = result.getString("ACCOUNT_NUMBER");
-            double currentBalance = result.getDouble("CURRENT_BALANCE");
-            System.out.print("\n╠═══════╬══════════════════════╬════════════╣");
-            System.out.format("\n║ %-5d ║ %-20s ║ %10.2f ║", accountId, accountNumber, currentBalance);
+            System.out.println("\n╔═══════╦══════════════════════╦════════════╗");
+            System.out.format("║ %-5s ║ %-20s ║ %-10s ║", "  №", "        Счет", "  Баланс");
+            while (result.next()) {
+                int accountId = result.getInt("ID");
+                String accountNumber = result.getString("ACCOUNT_NUMBER");
+                double currentBalance = result.getDouble("CURRENT_BALANCE");
+                System.out.print("\n╠═══════╬══════════════════════╬════════════╣");
+                System.out.format("\n║ %-5d ║ %-20s ║ %10.2f ║", accountId, accountNumber, currentBalance);
+            }
+            System.out.println("\n╚═══════╩══════════════════════╩════════════╝");
         }
-        System.out.println("\n╚═══════╩══════════════════════╩════════════╝");
     }
 
     //вывести список ОДНОГО счета
     private static void outputAccountInfo(Connection connection, int accountID) throws SQLException {
 
-        PreparedStatement preparedStatement = connection.prepareStatement("SELECT ID, ACCOUNT_NUMBER, CURRENT_BALANCE FROM accounts WHERE ID = ?");
-        preparedStatement.setInt(1, accountID);
-        ResultSet result = preparedStatement.executeQuery(); //т.к. запрос параметризованный, подготавливаем его классом preparedStatement
+        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT ID, ACCOUNT_NUMBER, CURRENT_BALANCE FROM accounts WHERE ID = ?")) {
+            preparedStatement.setInt(1, accountID);
+            ResultSet result = preparedStatement.executeQuery(); //т.к. запрос параметризованный, подготавливаем его классом preparedStatement
 
-        System.out.println("\nТекущий баланс по счету:");
-        System.out.println("\n╔═══════╦══════════════════════╦════════════╗");
-        System.out.format("║ %-5s ║ %-20s ║ %-10s ║", "  №", "        Счет", "  Баланс");
-        while (result.next()) {
-            int accountId = result.getInt("ID");
-            String accountNumber = result.getString("ACCOUNT_NUMBER");
-            double currentBalance = result.getDouble("CURRENT_BALANCE");
-            System.out.print("\n╠═══════╬══════════════════════╬════════════╣");
-            System.out.format("\n║ %-5d ║ %-20s ║ %10.2f ║", accountId, accountNumber, currentBalance);
+            System.out.println("\nТекущий баланс по счету:");
+            System.out.println("\n╔═══════╦══════════════════════╦════════════╗");
+            System.out.format("║ %-5s ║ %-20s ║ %-10s ║", "  №", "        Счет", "  Баланс");
+            while (result.next()) {
+                int accountId = result.getInt("ID");
+                String accountNumber = result.getString("ACCOUNT_NUMBER");
+                double currentBalance = result.getDouble("CURRENT_BALANCE");
+                System.out.print("\n╠═══════╬══════════════════════╬════════════╣");
+                System.out.format("\n║ %-5d ║ %-20s ║ %10.2f ║", accountId, accountNumber, currentBalance);
+            }
+            System.out.println("\n╚═══════╩══════════════════════╩════════════╝");
         }
-        System.out.println("\n╚═══════╩══════════════════════╩════════════╝");
     }
 
     //изменение баланса счету
