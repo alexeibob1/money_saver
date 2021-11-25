@@ -1,0 +1,54 @@
+package com.company;
+
+import org.junit.jupiter.api.Test;
+
+import static com.company.ExpenseAccounting.calcDouble;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class ExpenseAccountingTest {
+    ExpenseAccounting expenseAccounting = new ExpenseAccounting();
+
+    @Test
+    public void CheckIntOrNotTest() {
+        String strIn = "1";
+        int expResult = 1;
+        int actResult = expenseAccounting.checkIntOrNot(strIn);
+        assertEquals(expResult, actResult);
+        assertEquals(-1, expenseAccounting.checkIntOrNot("aaa"));
+        assertNotEquals("aaa", expenseAccounting.checkIntOrNot("aaa"));
+    }
+
+    @Test
+    public void countSumTest() {
+        double currentBalance = 20.50;
+        double transactionSum = 10.30;
+        int flag = 1;
+        double expResult = 30.80;
+        double actResult = expenseAccounting.countSum(currentBalance, transactionSum, flag);
+        assertEquals(expResult, actResult);
+
+        assertEquals(10.20, expenseAccounting.countSum(20.50, 10.30, -1));
+
+    }
+
+    @Test
+    public void CheckDoubleOrNotTest() {
+        assertTrue(expenseAccounting.checkDoubleOrNot("20.50"));
+        assertFalse(expenseAccounting.checkDoubleOrNot("20,50"));
+        assertFalse(expenseAccounting.checkDoubleOrNot("aa.bb"));
+
+    }
+    @Test
+    public  void calcDoubleTest () {
+        double expected;
+        double actuarial = 305.52;
+        expected = expenseAccounting.calcDouble(20.1, 15.2, '*');
+        assertEquals(expected, actuarial);
+        actuarial = 11;
+        expected = expenseAccounting.calcDouble(-23, -34, '-');
+        assertEquals(expected, actuarial);
+        actuarial = 0;
+        expected = expenseAccounting.calcDouble(-23.01, -34.2, '&');
+        assertEquals(expected, actuarial);
+    }
+}
