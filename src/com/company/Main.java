@@ -11,32 +11,31 @@ import java.time.format.DateTimeFormatter;
  * Установка драйвера UCanAccess в Intellij IDEA
  * https://www.youtube.com/watch?v=xM1KNbRkF3A
  */
-class ExpenseAccounting {
+public class Main {
     public static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
 
         //Подключение к БД MS ACCESS. Используем драйвер UCanAccess. Указан полный путь к файлу БД (.accdb)
-        String databaseURL = "jdbc:ucanaccess://D:/Download//DatabaseTemplate.accdb";
+        String databaseURL = "jdbc:ucanaccess://D:/Documents/ОПИ/Проект/Версия6/Project_Accounting/db/DatabaseTemplate.accdb";
         int userChoice = -1;
         boolean closeProg = false;
-        String menuMsg =
-            "\n╔════════════════════════════════════╗" +
-            "\n║                Меню                ║" +
-            "\n╠═══╦════════════════════════════════╣" +
-            "\n║ 1 ║ Создать счет                   ║" +
-            "\n║ 2 ║ Создать категорию              ║" +
-            "\n║ 3 ║ Пополнить счет                 ║" +
-            "\n║ 4 ║ Внести расход средств по счету ║" +
-            "\n║ 5 ║ История операций               ║" +
-            "\n║ 6 ║ Удалить счет                   ║" +
-            "\n║ 7 ║ Удалить категорию              ║" +
-            "\n║ 8 ║ Удалить операцию               ║" +
-            "\n║ 9 ║ Статистика по категориям       ║" +
-            "\n╠═══╬════════════════════════════════╣" +
-            "\n║ 0 ║ Выйти                          ║" +
-            "\n╚═══╩════════════════════════════════╝" +
-            "\nВыберите пункт Меню: ";
+        String menuMsg = "\n╔════════════════════════════════════╗" +
+                "\n║                Меню                ║" +
+                "\n╠═══╦════════════════════════════════╣" +
+                "\n║ 1 ║ Создать счет                   ║" +
+                "\n║ 2 ║ Создать категорию              ║" +
+                "\n║ 3 ║ Пополнить счет                 ║" +
+                "\n║ 4 ║ Внести расход средств по счету ║" +
+                "\n║ 5 ║ История операций               ║" +
+                "\n║ 6 ║ Удалить счет                   ║" +
+                "\n║ 7 ║ Удалить категорию              ║" +
+                "\n║ 8 ║ Удалить операцию               ║" +
+                "\n║ 9 ║ Статистика по категориям       ║" +
+                "\n╠═══╬════════════════════════════════╣" +
+                "\n║ 0 ║ Выйти                          ║" +
+                "\n╚═══╩════════════════════════════════╝" +
+                "\nВыберите пункт Меню: ";
         do {
             try {
                 Connection connection = DriverManager.getConnection(databaseURL);
@@ -241,6 +240,7 @@ class ExpenseAccounting {
         return consoleInput;
     }
 
+
     //Проверка длины строки, вводимой пользователем (для нового номера счета и новой категории. формат: 1-20 символов)
     static boolean checkNameLength(String consoleInput) {
         boolean isFormatCorrect = true;
@@ -250,6 +250,7 @@ class ExpenseAccounting {
         }
         return isFormatCorrect;
     }
+
 
     //Проверка строки, вводимой пользователем (для нового номера счета и новой категории. формат: 1-20 символов)
     static String checkNameString(Connection connection, String consoleInput, String menuType) throws SQLException {
@@ -290,7 +291,7 @@ class ExpenseAccounting {
                 isCorrect = true;
             }
         }
-        return  consoleInput;
+        return consoleInput;
     }
 
     //Заполнение множества для проверки пунктов меню
@@ -298,7 +299,7 @@ class ExpenseAccounting {
 
         HashSet<Integer> menuSet = new HashSet<>(); //объявляем коллекцию типа HashSet<Integer>
 
-        String sql = "SELECT ID FROM menu_items WHERE ID = 0" ;
+        String sql = "SELECT ID FROM menu_items WHERE ID = 0";
         int menuNum = 0;
 
         // формируем sql текст запрос в зависимости от того, для какого меню на экране необходимо проверить значение вводимое пользователем
@@ -336,6 +337,35 @@ class ExpenseAccounting {
         return menuSet.contains(userChoice); //проверяем есть ли такое число в коллекции
     }
 
+    static double calcDouble(double double1, double double2, char operation) {
+        double result = 0d;
+        switch (operation) {
+            case '+':
+                result = double1 + double2;
+                break;
+            case '-':
+                result = double1 - double2;
+                break;
+            case '*':
+                result = double1 * double2;
+                break;
+            case '%':
+                result = (double2 * double1) / 100;
+                break;
+            case '/':
+                if (double2 == 0) {
+                    throw new ArithmeticException("division by zero");
+                } else {
+                    result = double1 / double2;
+                }
+                break;
+            default:
+                System.out.println("Ошибка! Знак арифметической операции не распознан.");
+        }
+        return result;
+    }
+
+    //добавить новый счет
     private static void addAccount(Connection connection) throws SQLException {
 
         outputAllAccountsInfo(connection); //показать все счета на текущий момент
@@ -396,33 +426,6 @@ class ExpenseAccounting {
         System.out.println("\n╚═══════╩══════════════════════╝");
     }
 
-    static double calcDouble(double double1, double double2, char operation){
-        double result = 0d;
-        switch (operation) {
-            case '+':
-                result = double1 + double2;
-                break;
-            case '-':
-                result = double1 - double2;
-                break;
-            case '*':
-                result = double1 * double2;
-                break;
-            case '%':
-                result = (double2 * double1)/100;
-                break;
-            case '/':
-                if (double2 == 0) {
-                    throw new ArithmeticException("division by zero");
-                } else {
-                    result = double1 / double2;
-                }
-                break;
-            default:
-                System.out.println("Ошибка! Знак арифметической операции не распознан.");
-        }
-        return result;
-    }
     //вывести список ВСЕХ счетов
     private static void outputAllAccountsInfo(Connection connection) throws SQLException {
         Statement statement = connection.createStatement();
@@ -430,12 +433,16 @@ class ExpenseAccounting {
 
         System.out.println("\nТекущий баланс по счетам.");
 
+        System.out.println("\n╔═══════╦══════════════════════╦════════════╗");
+        System.out.format("║ %-5s ║ %-20s ║ %-10s ║", "  №", "        Счет", "  Баланс");
         while (result.next()) {
             int accountId = result.getInt("ID");
             String accountNumber = result.getString("ACCOUNT_NUMBER");
             double currentBalance = result.getDouble("CURRENT_BALANCE");
-            System.out.println(accountId + "   " + accountNumber + "   " + currentBalance);
+            System.out.print("\n╠═══════╬══════════════════════╬════════════╣");
+            System.out.format("\n║ %-5d ║ %-20s ║ %10.2f ║", accountId, accountNumber, currentBalance);
         }
+        System.out.println("\n╚═══════╩══════════════════════╩════════════╝");
     }
 
     //вывести список ОДНОГО счета
@@ -446,23 +453,38 @@ class ExpenseAccounting {
         ResultSet result = preparedStatement.executeQuery(); //т.к. запрос параметризованный, подготавливаем его классом preparedStatement
 
         System.out.println("\nТекущий баланс по счету:");
-
+        System.out.println("\n╔═══════╦══════════════════════╦════════════╗");
+        System.out.format("║ %-5s ║ %-20s ║ %-10s ║", "  №", "        Счет", "  Баланс");
         while (result.next()) {
             int accountId = result.getInt("ID");
             String accountNumber = result.getString("ACCOUNT_NUMBER");
             double currentBalance = result.getDouble("CURRENT_BALANCE");
-            System.out.println(accountId + "   " + accountNumber + "   " + currentBalance);
+            System.out.print("\n╠═══════╬══════════════════════╬════════════╣");
+            System.out.format("\n║ %-5d ║ %-20s ║ %10.2f ║", accountId, accountNumber, currentBalance);
         }
+        System.out.println("\n╚═══════╩══════════════════════╩════════════╝");
     }
 
     //изменение баланса счету
-    private static void changeAccountBalance(Connection connection, int accountID, double transactionAmount) throws SQLException {
+    private static void changeAccountBalance(Connection connection, int accountID, double transactionAmount, int flag) throws SQLException {
+        double currentBalance = 0;
 
-        //текст параметризированного sql-запроса для обновления значения поля CURRENT_BALANCE в таблице accounts
-        String sql = "UPDATE accounts SET CURRENT_BALANCE = CURRENT_BALANCE + ? WHERE ID = ?";
-
+        String sql = "SELECT CURRENT_BALANCE FROM accounts WHERE ID = ?";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setDouble(1, transactionAmount);
+        preparedStatement.setInt(1, accountID);
+        ResultSet result = preparedStatement.executeQuery(); // получаем текущий баланс по указанному счету
+
+        while (result.next()) {
+            currentBalance = result.getDouble("CURRENT_BALANCE");
+        }
+
+        currentBalance = countSum(currentBalance, transactionAmount, flag);
+
+        //текст параметризованного sql-запроса для обновления значения поля CURRENT_BALANCE в таблице accounts
+        sql = "UPDATE accounts SET CURRENT_BALANCE = ? WHERE ID = ?";
+
+        preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setDouble(1, currentBalance);
         preparedStatement.setInt(2, accountID);
         int qRow = preparedStatement.executeUpdate();
 
@@ -476,14 +498,17 @@ class ExpenseAccounting {
     //ввод транзакции (доход/расход) по счету
     // flag = 1 - пополнение счета (доход), flag = 0 - списание со счета (расход)
     private static void addActivity2Account(Connection connection, int flag) throws SQLException {
-
+        double transactionAmount = 0d;
+        String transactionDate = "error";
+        boolean isCorrect = false;
+        String consoleDateInput = "";
         outputAllAccountsInfo(connection); //показываем информацию по всем счетам
 
         String subMenuMsg = "\nВыберите счет, указав порядковый номер счета из списка: ";
         int accountID = checkMenuUserChoice(connection, "accounts", subMenuMsg);
         int categoryID = 0;
 
-        switch(flag) {
+        switch (flag) {
             case 1:
                 System.out.print("\nВведите сумму пополнения счета (формат: рублей.копеек): ");
                 categoryID = 0; //в таблице категорий для пополнения счета доступна только одна категория "Пополнение счета", которая имеет код 0. Лишний раз не читаем таблицу.
@@ -496,14 +521,22 @@ class ExpenseAccounting {
                 break;
         }
 
-        String consoleInput = scanner.nextLine();
-        double transactionAmount = checkTransactionAmount();
+        transactionAmount = checkTransactionAmount();
 
         System.out.print("\nУкажите дату в формате ГГГГ-ММ-ДД. Для ввода текущей даты оставьте строку пустую и нажмите Enter: ");
-        String transactionDate = scanner.nextLine();
-        transactionDate = checkDateFormat(transactionDate);
 
-        //текст параметризированного запроса на вставку данных в 4-ре поля талицы account_activity
+        while (!isCorrect) {
+            consoleDateInput = scanner.nextLine();
+            transactionDate = checkDateFormat(consoleDateInput);
+            if (transactionDate == "error") {
+                System.err.print("Некорректный ввод даты! Повторите ввод, используя формат (ГГГГ-ММ-ДД): ");
+                isCorrect = false;
+            } else {
+                isCorrect = true;
+            }
+        }
+
+        //текст параметризованного запроса на вставку данных в 4-ре поля талицы account_activity
         //конструкция format(CDate(?),"yyyy-mm-dd") принудительно заставляет БД преобразовать (CDate) значение параметра ? в соответствии с шаблоном (format) ГГГГ-ММ-ДД
         String sql = "INSERT into account_activity (ACCOUNT_ID, TRANSACTION_AMOUNT, CATEGORY_ID, TRANSACTION_DATE) VALUES (?, ?, ?, format(CDate(?),\"yyyy-mm-dd\") )";
 
@@ -519,16 +552,16 @@ class ExpenseAccounting {
             System.out.println();
         }
 
-        //выполняем обновление баланса.
+        //Выполняем обновление баланса.
         // Math.abs(Х)*flag призвана исключить ситуацию когда пользователь пополняет баланс, но при этом вводит отрицательную сумму пополнения (и обратная ситуация).
-        changeAccountBalance(connection, accountID, Math.abs(transactionAmount) * flag);
+        changeAccountBalance(connection, accountID, Math.abs(transactionAmount), flag);
 
         outputAccountInfo(connection, accountID); //выводим список всех счетов
         outputAccountActivity(connection, accountID, 5); //выводим список 5-ти последних транзакций по обновленному счету
 
     }
 
-    // вывести информацию о движении средств по указанному счету.
+    // Вывести информацию о движении средств по указанному счету.
     // flag = 0 - все операции из account_activity, flag = 5 - последние 5 операций из account_activity
     // accountID = -1 - запросить счет у пользователя по которому отобразить информацию,
     // 0 - по всем счетам, n - только по указанному счету (для использования в методах, где номер счета до вызова уже был определен).
@@ -544,12 +577,12 @@ class ExpenseAccounting {
         // оконечная часть запроса (условие сортировки) будет иметь неизменяемый вид и выполнять сортировку по номеру транзакции по убыванию (обратная сортировка)
 
         String sql = "TRANSACTION_ID, ACCOUNT_NUMBER, TRANSACTION_AMOUNT, CATEGORY_INFO, TRANSACTION_DATE " +
-            "from (account_activity INNER JOIN accounts ON account_activity.ACCOUNT_ID = accounts.ID) " +
-            "INNER JOIN categories ON account_activity.CATEGORY_ID = categories.CATEGORY_ID ";
+                "from (account_activity INNER JOIN accounts ON account_activity.ACCOUNT_ID = accounts.ID) " +
+                "INNER JOIN categories ON account_activity.CATEGORY_ID = categories.CATEGORY_ID ";
         String sqlWhere = " WHERE accounts.ID = ? "; // первый вариант условия WHERE
         String sqlOrder = " ORDER by TRANSACTION_ID DESC"; // сортировка
 
-        switch(accountID) {
+        switch (accountID) {
             case -1:
                 outputAllAccountsInfo(connection);
                 String subMenuMsg = "\nДля получения истории операций по счету введите порядковый номер счета: ";
@@ -575,15 +608,19 @@ class ExpenseAccounting {
         preparedStatement.setInt(1, accountID);
         ResultSet result = preparedStatement.executeQuery();
 
+        System.out.println("\n╔═══════╦══════════════════════╦════════════╦══════════════════════╦═════════════╗");
+        System.out.format("║ %-5s ║ %-20s ║ %-10s ║ %-20s ║ %-11s ║", "  №", "        Счет", "  Сумма", "     Категория", "    Дата");
+
         while (result.next()) {
             int transactionId = result.getInt("TRANSACTION_ID");
             String accountNumber = result.getString("ACCOUNT_NUMBER");
             double transactionAmount = result.getDouble("TRANSACTION_AMOUNT");
             String categoryInfo = result.getString("CATEGORY_INFO");
             Date transactionDate = result.getDate("TRANSACTION_DATE");
-
-            System.out.println(transactionId + "   " + accountNumber + "   " + transactionAmount + "   " + categoryInfo + "   " + transactionDate);
+            System.out.print("\n╠═══════╬══════════════════════╬════════════╬══════════════════════╬═════════════╣");
+            System.out.format("\n║ %-5d ║ %-20s ║ %10.2f ║ %-20s ║ %-11s ║", transactionId, accountNumber, transactionAmount, categoryInfo, transactionDate);
         }
+        System.out.println("\n╚═══════╩══════════════════════╩════════════╩══════════════════════╩═════════════╝");
     }
 
     // удаление транзакции
@@ -617,7 +654,6 @@ class ExpenseAccounting {
             flag = 1;
         }
         // Math.abs(Х)*flag призвана изменить знак суммы транзакции (со списания на пополнение и наоборот)
-        transactionAmount = Math.abs(transactionAmount) * flag;
 
         preparedStatement = connection.prepareStatement("DELETE FROM account_activity WHERE TRANSACTION_ID = ?");
         preparedStatement.setInt(1, transactionID);
@@ -626,7 +662,7 @@ class ExpenseAccounting {
             System.out.println("Транзакция успешно удалена.");
         }
 
-        changeAccountBalance(connection, accountId, transactionAmount); //передаем данные на удаление
+        changeAccountBalance(connection, accountId, Math.abs(transactionAmount), flag); //передаем данные на удаление
     }
 
     //удаление категории
@@ -694,7 +730,7 @@ class ExpenseAccounting {
     }
 
     //вывод статистики по категориям
-    private static void categoryStatistics (Connection connection) throws SQLException {
+    private static void categoryStatistics(Connection connection) throws SQLException {
         // Запрос состоит из двух запросов:
         // (SELECT CATEGORY_ID, ROUND(SUM(TRANSACTION_AMOUNT), 2) as TRANSACTION_SUM FROM account_activity GROUP by CATEGORY_ID) q
         // выбирает данные из таблицы account_activity, группирует по CATEGORY_ID и для каждой группы подсчитывает сумму внутри группы ROUND(SUM(TRANSACTION_AMOUNT), 2)
@@ -702,8 +738,9 @@ class ExpenseAccounting {
         // для каждого кода (группы) соответсвующее текстовое поле описания (CATEGORY_INFO).
         //
         String sql = "SELECT categories.CATEGORY_INFO, q.TRANSACTION_SUM FROM categories " +
-            "INNER JOIN (SELECT CATEGORY_ID, ROUND(SUM(TRANSACTION_AMOUNT), 2) as TRANSACTION_SUM FROM account_activity GROUP by CATEGORY_ID) q " +
-            "ON categories.CATEGORY_ID = q.CATEGORY_ID ORDER BY categories.CATEGORY_ID";
+                "INNER JOIN (SELECT CATEGORY_ID, ROUND(SUM(TRANSACTION_AMOUNT), 2) as TRANSACTION_SUM FROM account_activity GROUP by CATEGORY_ID) q " +
+                "ON categories.CATEGORY_ID = q.CATEGORY_ID " +
+                "ORDER BY categories.CATEGORY_ID";
 
         String categoryInfo;
         double transactionSum;
@@ -712,18 +749,17 @@ class ExpenseAccounting {
         Statement statement = connection.createStatement();
         ResultSet result = statement.executeQuery(sql);
 
+        System.out.println("\n╔══════════════════════╦════════════╗");
+        System.out.format("║ %-20s ║ %-10s ║", "     Категория", "  Сумма");
+
         while (result.next()) {
             categoryInfo = result.getString("CATEGORY_INFO");
             transactionSum = result.getDouble("TRANSACTION_SUM");
 
-            System.out.println(categoryInfo + "   " + transactionSum);
+            System.out.print("\n╠══════════════════════╬════════════╣");
+            System.out.format("\n║ %-20s ║ %10.2f ║", categoryInfo, transactionSum);
         }
+        System.out.println("\n╚══════════════════════╩════════════╝");
     }
 
-
-
-
-    //close
-
 }
-
