@@ -21,7 +21,7 @@ class ExpenseAccounting {
         int userChoice = -1;
         boolean closeProg = false;
         String menuMsg =
-                "\nг====================================¬" +
+            "\nг====================================¬" +
                 "\n¦                Menu                ¦" +
                 "\n¦===T================================¦" +
                 "\n¦ 1 ¦ Create account                 ¦" +
@@ -503,6 +503,41 @@ class ExpenseAccounting {
     }
 
     /**
+     * this method do all arithmetic operations with two operands
+     * @param double1 it is first operand
+     * @param double2 it is second operand
+     * @param operation it is sign of arithmetic operation
+     * @return result of arithmetic operation between two operands if there are not correct parameters return 0
+     * */
+    static double calcDouble(double double1, double double2, char operation){
+        double result = 0d;
+        switch (operation) {
+            case '+':
+                result = double1 + double2;
+                break;
+            case '-':
+                result = double1 - double2;
+                break;
+            case '*':
+                result = double1 * double2;
+                break;
+            case '%':
+                result = (double2 * double1)/100;
+                break;
+            case '/':
+                if (double2 == 0) {
+                    throw new ArithmeticException("division by zero");
+                } else {
+                    result = double1 / double2;
+                }
+                break;
+            default:
+                System.out.println("Ошибка! Знак арифметической операции не распознан.");
+        }
+        return result;
+    }
+
+    /**
      * this method changes balance with right accountID
      * @param accountID it is index of right account
      * @param connection it is the link between project and DB
@@ -831,4 +866,3 @@ class ExpenseAccounting {
 
     //close
 }
-
