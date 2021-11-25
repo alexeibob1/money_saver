@@ -1,6 +1,5 @@
-
-    //вывести список ВСЕХ счетов
-    private static void outputAllAccountsInfo(Connection connection) throws SQLException {
+//вывести список ВСЕХ счетов
+private static void outputAllAccountsInfo(Connection connection) throws SQLException {
         Statement statement = connection.createStatement();
         ResultSet result = statement.executeQuery("SELECT ID, ACCOUNT_NUMBER, CURRENT_BALANCE FROM accounts ORDER by ID");
 
@@ -56,7 +55,7 @@
         outputAllAccountsInfo(connection); //показываем информацию по всем счетам
 
         String subMenuMsg = "\nВыберите счет, указав порядковый номер счета из списка: ";
-        int accountID = checkUserChoice(connection, "accounts", subMenuMsg);
+        int accountID = checkMenuUserChoice(connection, "accounts", subMenuMsg);
         int categoryID = 0;
 
         switch(flag) {
@@ -67,13 +66,13 @@
             case -1:
                 outputAllCategories(connection); //отображаем все категории (выводит список всех категорий кроме категории "Пополнение счета" с кодом 0)
                 subMenuMsg = "\nУкажите порядковый номер категории расходов из списка: ";
-                categoryID = checkUserChoice(connection, "categories", subMenuMsg);
+                categoryID = checkMenuUserChoice(connection, "categories", subMenuMsg);
                 System.out.print("\nВведите сумму расходов (формат: рублей.копеек): ");
                 break;
         }
 
         String consoleInput = scanner.nextLine();
-        double transactionAmount = checkDoubleOrNot(consoleInput);
+        double transactionAmount = checkTransactionAmount();
 
         System.out.print("\nУкажите дату в формате ГГГГ-ММ-ДД. Для ввода текущей даты оставьте строку пустую и нажмите Enter: ");
         String transactionDate = scanner.nextLine();
@@ -120,8 +119,8 @@
         // оконечная часть запроса (условие сортировки) будет иметь неизменяемый вид и выполнять сортировку по номеру транзакции по убыванию (обратная сортировка)
 
         String sql = "TRANSACTION_ID, ACCOUNT_NUMBER, TRANSACTION_AMOUNT, CATEGORY_INFO, TRANSACTION_DATE " +
-                "from (account_activity INNER JOIN accounts ON account_activity.ACCOUNT_ID = accounts.ID) " +
-                "INNER JOIN categories ON account_activity.CATEGORY_ID = categories.CATEGORY_ID ";
+            "from (account_activity INNER JOIN accounts ON account_activity.ACCOUNT_ID = accounts.ID) " +
+            "INNER JOIN categories ON account_activity.CATEGORY_ID = categories.CATEGORY_ID ";
         String sqlWhere = " WHERE accounts.ID = ? "; // первый вариант условия WHERE
         String sqlOrder = " ORDER by TRANSACTION_ID DESC"; // сортировка
 
@@ -129,7 +128,7 @@
             case -1:
                 outputAllAccountsInfo(connection);
                 String subMenuMsg = "\nДля получения истории операций по счету введите порядковый номер счета: ";
-                accountID = checkUserChoice(connection, "accounts", subMenuMsg);
+                accountID = checkMenuUserChoice(connection, "accounts", subMenuMsg);
                 break;
             case 0:
                 System.out.println("\nИстория операций по всем счетам.");
@@ -174,7 +173,7 @@
         if (transactionID == -1) {
             outputAccountActivity(connection, 0, 0);
             String subMenuMsg = "\nДля удаления операции, укажите ее порядковый номер из списка: ";
-            transactionID = checkUserChoice(connection, "activities", subMenuMsg);
+            transactionID = checkMenuUserChoice(connection, "activities", subMenuMsg);
         }
 
         PreparedStatement preparedStatement = connection.prepareStatement("SELECT ACCOUNT_ID, TRANSACTION_AMOUNT, CATEGORY_ID FROM account_activity WHERE TRANSACTION_ID = ?");
@@ -213,7 +212,7 @@
 
         outputAllCategories(connection); //вывести список всех категорий (выводит список всех категорий кроме категории "Пополнение счета" с кодом 0)
         String subMenuMsg = "\nДля удаления категории, укажите ее порядковый номер из списка: ";
-        categoryId = checkUserChoice(connection, "categories", subMenuMsg);
+        categoryId = checkMenuUserChoice(connection, "categories", subMenuMsg);
 
         PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM categories WHERE CATEGORY_ID = ?"); //запрос на удаление записи из таблицы категорий
         preparedStatement.setInt(1, categoryId);
@@ -246,7 +245,7 @@
         outputAllAccountsInfo(connection); //вывести список всех счетов
 
         String subMenuMsg = "\nДля удаления счета, укажите его порядковый номер из списка: ";
-        accountId = checkUserChoice(connection, "accounts", subMenuMsg);
+        accountId = checkMenuUserChoice(connection, "accounts", subMenuMsg);
 
         PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM accounts WHERE ID = ?"); //запрос на удаление записи из таблицы счетов
         preparedStatement.setInt(1, accountId);
@@ -267,19 +266,19 @@
 
             deleteAccountActivity(connection, transactionId);
         }
-   }
+    }
 
     //вывод статистики по категориям
     private static void categoryStatistics (Connection connection) throws SQLException {
-    // Запрос состоит из двух запросов:
-    // (SELECT CATEGORY_ID, ROUND(SUM(TRANSACTION_AMOUNT), 2) as TRANSACTION_SUM FROM account_activity GROUP by CATEGORY_ID) q
-    // выбирает данные из таблицы account_activity, группирует по CATEGORY_ID и для каждой группы подсчитывает сумму внутри группы ROUND(SUM(TRANSACTION_AMOUNT), 2)
-    // далее результат этого запроса в виде "код (группа) - сумма" через INNER JOIN присоединяется к таблице categories, с целью выбрать из таблицы categories
-    // для каждого кода (группы) соответсвующее текстовое поле описания (CATEGORY_INFO).
-    //
+        // Запрос состоит из двух запросов:
+        // (SELECT CATEGORY_ID, ROUND(SUM(TRANSACTION_AMOUNT), 2) as TRANSACTION_SUM FROM account_activity GROUP by CATEGORY_ID) q
+        // выбирает данные из таблицы account_activity, группирует по CATEGORY_ID и для каждой группы подсчитывает сумму внутри группы ROUND(SUM(TRANSACTION_AMOUNT), 2)
+        // далее результат этого запроса в виде "код (группа) - сумма" через INNER JOIN присоединяется к таблице categories, с целью выбрать из таблицы categories
+        // для каждого кода (группы) соответсвующее текстовое поле описания (CATEGORY_INFO).
+        //
         String sql = "SELECT categories.CATEGORY_INFO, q.TRANSACTION_SUM FROM categories " +
-                     "INNER JOIN (SELECT CATEGORY_ID, ROUND(SUM(TRANSACTION_AMOUNT), 2) as TRANSACTION_SUM FROM account_activity GROUP by CATEGORY_ID) q " +
-                     "ON categories.CATEGORY_ID = q.CATEGORY_ID ORDER BY categories.CATEGORY_ID";
+            "INNER JOIN (SELECT CATEGORY_ID, ROUND(SUM(TRANSACTION_AMOUNT), 2) as TRANSACTION_SUM FROM account_activity GROUP by CATEGORY_ID) q " +
+            "ON categories.CATEGORY_ID = q.CATEGORY_ID ORDER BY categories.CATEGORY_ID";
 
         String categoryInfo;
         double transactionSum;
