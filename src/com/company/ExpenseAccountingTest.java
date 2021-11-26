@@ -8,12 +8,11 @@ import java.time.format.DateTimeFormatter;
 
 
 public class ExpenseAccountingTest {
-    Main expenseAccounting = new Main();
+    stas expenseAccounting = new stas();
 
     @Test
     public void CheckIntOrNotTestInt () {
-        String strIn = "1";
-        assertEquals(1,expenseAccounting.checkIntOrNot(strIn));
+        assertEquals(1,expenseAccounting.checkIntOrNot("1"));
     }
 
     @Test
