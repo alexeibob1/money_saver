@@ -13,9 +13,7 @@ public class ExpenseAccountingTest {
     @Test
     public void CheckIntOrNotTestInt () {
         String strIn = "1";
-        int expResult = 1;
-        int actResult = expenseAccounting.checkIntOrNot(strIn);
-        assertEquals(expResult,actResult);
+        assertEquals(1,expenseAccounting.checkIntOrNot(strIn));
     }
 
     @Test
