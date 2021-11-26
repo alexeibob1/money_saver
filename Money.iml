@@ -27,5 +27,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="github.abirmingham.gradle.jacoco.plugin" level="project" />
+    <orderEntry type="library" name="github.shidilii.jacocoreport" level="project" />
   </component>
 </module>

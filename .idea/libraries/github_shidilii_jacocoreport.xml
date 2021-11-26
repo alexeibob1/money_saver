@@ -1,0 +1,37 @@
+<component name="libraryTable">
+  <library name="github.shidilii.jacocoreport" type="repository">
+    <properties maven-id="com.github.shidilii:jacocoreport:0.8.4" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/jacocoreport-0.8.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jacococore-0.8.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/asm-7.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/asm-commons-7.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/asm-analysis-7.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/asm-tree-7.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.jdt.core-3.19.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.core.resources-3.15.100.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.core.expressions-3.8.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.core.runtime-3.23.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.osgi-3.17.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.equinox.common-3.15.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.core.jobs-3.12.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.equinox.registry-3.11.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.equinox.preferences-3.9.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.core.contenttype-3.8.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.equinox.app-1.6.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.core.filesystem-1.9.100.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.text-3.12.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.core.commands-3.10.100.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/org.eclipse.jgit-5.5.0.201909110433-r.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jsch-0.1.55.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jzlib-1.1.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/JavaEWAH-1.1.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-api-1.7.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/bcpg-jdk15on-1.61.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/bcprov-jdk15on-1.61.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/bcpkix-jdk15on-1.61.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
